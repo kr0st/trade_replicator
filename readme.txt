@@ -119,4 +119,5 @@ all of them need to be configured properly.
 Version History
 
 v1.0
-Initial release.
+Initial release, no support for JForex yet.
+JForex will be supported (master only) in the next release.
