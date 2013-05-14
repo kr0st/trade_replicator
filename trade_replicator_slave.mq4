@@ -1,5 +1,5 @@
 /* Trade Replicator (Slave).mq4                                                    *
- * v1.0                                                                            *
+ * v1.1                                                                            *
  * Distributed under the BSD license (http://opensource.org/licenses/BSD-2-Clause) *
  * Copyright (c) 2013, Rostislav Kuratch                                           *
  * All rights reserved.                                                            */
@@ -25,6 +25,14 @@ extern string g_deposit_currency = "USD";
 extern int g_max_slippage = 4;
 extern bool g_reverse_trades = false; //invert the direction of the master trade or not
 extern double g_trade_scale = 1; //volume multiplier, master lots will be multiplied by it and the result used for the copied trade opening
+
+string g_subscribed_masters = "";
+string g_current_master_id = "";
+
+void fill_in_subscribed_masters()
+{
+   g_subscribed_masters = //list of masters in the form "master1" + " master2" + " master3" etc.
+}
 
 #include <postgremql4.mqh>
 #include <stderror.mqh>
@@ -144,8 +152,16 @@ int g_trade_direction[];
 double g_trade_volume[];
 double g_trade_open_price[];
 double g_trade_to_close_id[];
-
 string g_trades[];
+string g_master_ids[];
+
+int tokenize_masters()
+{
+    ArrayResize(g_master_ids, 0);
+    SplitString(g_subscribed_masters, " ", g_master_ids);
+    
+    return (ArraySize(g_master_ids));
+}
 
 bool reconnect()
 {
@@ -319,7 +335,7 @@ void slave_open_trade_to_db(int index, int status)
     Print("Status text = ", status_text);
     
     string master_trade_id = g_trades[index];
-    string master_id = g_master_id_setting;
+    string master_id = g_current_master_id;
     string instrument = g_trade_instrument[index];
     int direction = g_trade_direction[index];
     double volume = g_trade_volume[index];
@@ -500,7 +516,7 @@ void close_trades()
 
 bool get_trades_to_open()
 {
-    string query = "select * from master_trades where master_id = '" + g_master_id_setting + "' and close_time is null and trade_id not in (select master_trade_id from slave_trades where close_time is null and master_id = '" + g_master_id_setting + "' and slave_id = '" + g_slave_id_setting + "');";
+    string query = "select * from master_trades where master_id = '" + g_current_master_id + "' and close_time is null and trade_id not in (select master_trade_id from slave_trades where close_time is null and master_id = '" + g_current_master_id + "' and slave_id = '" + g_slave_id_setting + "');";
     string rows = pmql_exec(query);
     return (open_trades_from_rows(rows));
 }
@@ -555,13 +571,27 @@ bool closed_trades_from_rows(string rows)
 
 bool get_trades_to_close()
 {
-    string query = "select st.slave_trade_id from slave_trades st, master_trades mt where st.master_id = '" + g_master_id_setting + "' and st.slave_id = '" + g_slave_id_setting + "' and st.close_time is NULL and st.status is NULL and st.master_trade_id = mt.trade_id and mt.close_time is not NULL;";
+    string query = "select st.slave_trade_id from slave_trades st, master_trades mt where st.master_id = '" + g_current_master_id + "' and st.slave_id = '" + g_slave_id_setting + "' and st.close_time is NULL and st.status is NULL and st.master_trade_id = mt.trade_id and mt.close_time is not NULL;";
     string rows = pmql_exec(query);
     return (closed_trades_from_rows(rows));
 }
 
 int start()
 {
+    fill_in_subscribed_masters();
+    int masters_count = tokenize_masters();
+    Print("Subscribed to " + masters_count + " masters.");
+
+    int cur_master = 0;
+    for (; cur_master < masters_count; cur_master++)
+        Print("Subscribed master: " + g_master_ids[cur_master]);
+
+    if (tokenize_masters() <= 0)
+    {
+        Print("ERROR: no subscribed masters!");
+        return (-1);
+    }
+
     if (!connect_db())
         return (-1);
 
@@ -575,12 +605,18 @@ int start()
         if ((TimeLocal() - prev_time) >= 1) //Do stuff once per second
         {
             prev_time = TimeLocal();
-            
-            if (get_trades_to_close())
-                close_trades();
 
-            if (get_trades_to_open())
-                open_trades();
+            cur_master = 0;
+            for (; cur_master < masters_count; cur_master++)
+            {
+                g_current_master_id = g_master_ids[cur_master];
+
+                if (get_trades_to_close())
+                    close_trades();
+
+                if (get_trades_to_open())
+                    open_trades();
+            }
         }
 
         Sleep(500);

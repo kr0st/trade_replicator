@@ -1,5 +1,5 @@
 /* Trade Replicator (Master).mq4                                                   *
- * v1.0                                                                            *
+ * v1.1                                                                            *
  * Distributed under the BSD license (http://opensource.org/licenses/BSD-2-Clause) *
  * Copyright (c) 2013, Rostislav Kuratch                                           *
  * All rights reserved.                                                            */

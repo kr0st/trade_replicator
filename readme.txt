@@ -71,8 +71,7 @@ you should give script’s DB user rights to create tables.
 Many masters and slaves could use the same database as long as the rule of uniqueness
 is not violated for master ids and for slave ids.
 
-It is possible to copy from many masters at once but many instances of slave script
-should be running, each configured to copy from a specific master id.
+It is possible to copy from many masters at once in a single running slave script instance.
 
 
 How it works
@@ -100,13 +99,38 @@ of trading for masters and slaves.
 Quick Start
 
 Before running the scripts they have to be properly configured. You can do it every time
-when you run the script or you can write values you need right into mql script file
+when you run the script or you can write values you need right into mq4 script file
 and compile it.
 
 The first important thing to understand and configure is master and slave ids.
 The best way is to use some password generating software and generate 20-symbol ids.
 However it should be clear that slave script should contain the existing master id
 because slave script will be copying trades only from the master with the given id.
+
+When setting up a slave side script, please note that it can copy trades from many
+masters therefore you can supply multiple space-separated masters ids
+to the slave script, here is how to configure masters ids in a slave-side scrip:
+
+1) Inside slave script mq4 file find a function
+    called “void fill_in_subscribed_masters()”;
+
+
+2) g_subscribed_masters string should be formed in a special way due to the
+    limitations of MT4 scripting - it does not support initialization of long strings
+    in a simple way, so the string has to be dynamically constructed.
+
+    
+    Here is the example, suppose you want to copy from masters
+    “Sb784fvC6Nl4oX9qGUAF”, “hjzjkd876SDdsd” and “5euighGJAFjsadstGFJ”:
+    
+    g_subscribed_masters = "Sb784fvC6Nl4oX9qGUAF" + " hjzjkd876SDdsd" +
+    " 5euighGJAFjsadstGFJ";
+    
+    (note that all master ids that go after the first one have 1
+    extra space character before the actual id, very important to do this)
+
+
+3) Recompile the script (F7).
 
 When ids are configured it is time to setup the database access. Parameters are pretty
 much self-explanatory, the only thing to remember here is that read/write access is
@@ -117,6 +141,9 @@ all of them need to be configured properly.
 
 
 Version History
+
+v1.1
+Added ability to subscribe to multiple masters in a single slave script instance.
 
 v1.0
 Initial release, no support for JForex yet.
