@@ -51,6 +51,13 @@ When PostgreMQL4 is deployed you just have to place either “trade_replicator_mas
 or “trade_replicator_slave.mq4” into experts/scripts folder of your MT4 installation
 and compile the script.
 
+In case of JForex master you have to place java file containing this strategy into
+“Documents\JForex\Strategies” where Documents is just your Windows documents folder.
+Also for JForex master to work it needs a database driver which you should obtain from
+PostgreSQL site, the file is called “postgresql-9.2-1002.jdbc4.jar”, this file
+should be placed into “Documents\JForex\Strategies\files”. When this is done
+just compile java file from Dukascopy trading platform and start it.
+
 Master script is used at the signal provider side and slave version is used
 at the signal subscriber side.
 
@@ -141,6 +148,9 @@ all of them need to be configured properly.
 
 
 Version History
+
+v1.2
+JForex master strategy implemented.
 
 v1.1
 Added ability to subscribe to multiple masters in a single slave script instance.

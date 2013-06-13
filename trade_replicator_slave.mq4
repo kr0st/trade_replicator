@@ -1,5 +1,5 @@
 /* Trade Replicator (Slave).mq4                                                    *
- * v1.1                                                                            *
+ * v1.2                                                                            *
  * Distributed under the BSD license (http://opensource.org/licenses/BSD-2-Clause) *
  * Copyright (c) 2013, Rostislav Kuratch                                           *
  * All rights reserved.                                                            */
@@ -20,7 +20,6 @@ extern string g_timezone_setting = "your_broker_time_zone"; //server time zone -
                                                             //format should be like this (offset in numerical form): +00 (meaning GMT, +01 = GMT+1, etc.)
 
 extern string g_slave_id_setting = "your_randomly_generated_slave_id"; //20 symbols recommended id, use some passwords generator to obtain it
-extern string g_master_id_setting = "id_of_the_master_you_want_to_copy_from";
 extern string g_deposit_currency = "USD";
 extern int g_max_slippage = 4;
 extern bool g_reverse_trades = false; //invert the direction of the master trade or not
